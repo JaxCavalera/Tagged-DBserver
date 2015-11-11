@@ -1,0 +1,19 @@
+{
+  "name": "dbserver",
+  "version": "1.0.0",
+  "description": "server for postgresql",
+  "main": "server.js",
+  "dependencies": {
+    "pg-promise": "^2.2.5"
+  },
+  "devDependencies": {
+    "babel-core": "^6.1.2",
+    "babel-preset-es2015": "^6.1.2",
+    "ip": "^1.0.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Jax",
+  "license": "ISC"
+}
