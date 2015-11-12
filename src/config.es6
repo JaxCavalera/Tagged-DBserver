@@ -1,4 +1,9 @@
-import pgp from 'pg-promise';
+import promise from 'bluebird';
+let options = {promiseLib: promise};
+
+import pgprom from 'pg-promise';
+let pgp = pgprom(options);
+
 import http from 'http';
 import ip from 'ip';
 
@@ -19,8 +24,14 @@ const cn = {
 const db = pgp(cn);
 
 //	Start the node webserver listening for GET requests
-http.createServer(function (req, res) {
-  if (req.method == 'GET') {
-    returnUserList(req, res);
-  }
-}).listen(port, host);
+http.createServer(function (req, res)
+{
+	if (req.method == 'GET')
+	{
+		returnUserList(req, res);
+		console.log('get received');
+	}
+}).listen(port, host)
+{
+	console.log('Now Listening');
+};
