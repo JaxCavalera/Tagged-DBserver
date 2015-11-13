@@ -26,7 +26,7 @@ const db = pgp(cn);
 //	Start the node webserver listening for GET requests
 http.createServer(function (req, res)
 {
-	if (req.method == 'GET')
+	if (req.method == 'POST')
 	{
 		returnUserList(req, res);
 		console.log('get received');
