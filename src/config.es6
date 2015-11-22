@@ -31,8 +31,9 @@ dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencode
 
 dbserver.post('/', function(req, res) {
     let myReq = req.body;
-    console.log(myReq);
-    res.json(myReq);
+    var requestType = req.get('Content-Type');
+    console.log(requestType);
+    return res.json(myReq);
 });
 
 const server = dbserver.listen(3000, function() {
