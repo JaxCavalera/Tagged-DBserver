@@ -1,4 +1,5 @@
 import express from 'express';
+import methodOverride from 'method-override';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import multer from 'multer';
@@ -30,8 +31,10 @@ const corsOptions = {
 };
 
 //  Configure how to respond to handle requests
-dbserver.use(bodyParser.json());
-dbserver.use(bodyParser.urlencoded({extended: true}));
+dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencoded procesing
+dbserver.use(bodyParser.text());
+dbserver.use(bodyParser.json());//  JSON processing
+dbserver.use(methodOverride());
 
 dbserver.post('/', cors(corsOptions), function(req, res, next) {
     let myReq = req.body;
