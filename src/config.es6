@@ -1,15 +1,15 @@
+import express from 'express';
+
+import bodyParser from 'body-parser';
+import multer from 'multer';
+const upload = multer();//   Multipart/form-data processing
+
+//  ===== Database Related Imports =====
 import promise from 'bluebird';
 let options = {promiseLib: promise};
 
 import pgprom from 'pg-promise';
 let pgp = pgprom(options);
-
-import http from 'http';
-import ip from 'ip';
-
-//	node js webserver
-const port = 8081;
-const host = ip.address();
 
 //	database connection details
 const cn = {
@@ -17,21 +17,27 @@ const cn = {
     port: 5432,
     database: 'tagged',
     user: 'postgres',
-    password: 'password'
+    password: 'password',
 };
 
 //	set "db" as the database object
 const db = pgp(cn);
 
-//	Start the node webserver listening for GET requests
-http.createServer(function (req, res)
-{
-	if (req.method == 'POST')
-	{
-		returnUserList(req, res);
-		console.log('get received');
-	}
-}).listen(port, host)
-{
-	console.log('Now Listening');
-};
+const dbserver = express();
+
+//  Configure how to respond to handle requests
+dbserver.use(bodyParser.json());//  JSON processing
+dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencoded procesing
+
+dbserver.post('/', function(req, res) {
+    let myReq = req.body;
+    console.log(myReq);
+    res.json(myReq);
+});
+
+const server = dbserver.listen(3000, function() {
+    const host = server.address().address;
+    const port = server.address().port;
+
+    console.log('listening at : http://' + host + ':' + port);
+});
