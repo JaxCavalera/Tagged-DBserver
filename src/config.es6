@@ -1,6 +1,7 @@
 import express from 'express';
 import methodOverride from 'method-override';
-import cors from 'cors';
+
+// import cors from 'cors';
 import bodyParser from 'body-parser';
 import multer from 'multer';
 const upload = multer();//   Multipart/form-data processing
@@ -26,9 +27,9 @@ const db = pgp(cn);
 
 const dbserver = express();
 
-const corsOptions = {
-    origin: 'http://cxstudios.duckdns.org',
-};
+// const corsOptions = {
+//     origin: 'http://cxstudios.duckdns.org',
+// };
 
 //  Configure how to respond to handle requests
 dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencoded procesing
@@ -36,7 +37,7 @@ dbserver.use(bodyParser.text());
 dbserver.use(bodyParser.json());//  JSON processing
 dbserver.use(methodOverride());
 
-dbserver.post('/', cors(corsOptions), function(req, res, next) {
+dbserver.post('/', function(req, res, next) {
     let myReq = req.body;
     console.log(myReq);
     res.json(myReq);
