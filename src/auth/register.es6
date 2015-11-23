@@ -26,7 +26,7 @@ export function regAble(uname) {
         name: uname,
     })
     .then(function(data) {
-        console.log('Username is Available ' + data);
+        console.log('Username is Available ', data);
         return true;
     })
     .catch(function(error) {
