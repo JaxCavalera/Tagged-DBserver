@@ -1,6 +1,14 @@
 import express from 'express';
 import methodOverride from 'method-override';
 
+/*
+import cors from 'cors';
+
+cors Cross-Origin Resource Sharing allows added security
+It uses Headers to lock in communication between a website and server
+the Origin is the port+url  this is all related to SSL
+*/
+
 //  ===== Database Related Imports =====
 import promise from 'bluebird';
 let options = {promiseLib: promise};
@@ -22,12 +30,20 @@ const cn = {
 //	set "db" as the database object
 const db = pgp(cn);
 
-// import cors from 'cors';
+// IMPORT enhancing modules such as session and content handling;
 import bodyParser from 'body-parser';
 import multer from 'multer';
 const upload = multer();//   Multipart/form-data processing
 
+//  Session must be imported AFTER bodyparser etc
+import session from 'express-session';
+
 const dbserver = express();
+const sessionOptions = {
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: false,
+};
 
 //  Import DB Query Functions
 import {regAble, regRun} from './auth/register.es6';// regable(username) returns bool
@@ -36,22 +52,32 @@ import {regAble, regRun} from './auth/register.es6';// regable(username) returns
 //     origin: 'http://cxstudios.duckdns.org',
 // };
 
-//  Configure how to respond to handle requests
+//  Configure the modules that the server code will use
 dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencoded procesing
 dbserver.use(bodyParser.text());
 dbserver.use(bodyParser.json());//  JSON processing
 dbserver.use(methodOverride());
+dbserver.use(session(sessionOptions));
+
+//  =====   Request Routing   =====
+/*
+Routes are the '/route-goes-here', part and are mirrored
+as an extra in the client code.
+e.g. client URL = www.meal.com
+server URL is
+*/
 
 dbserver.post('/register', function(req, res) {
     let myReq = JSON.parse(req.body);
 
     let unameValue = myReq.username;
-
-    //  Promises .then and .catch only delay processing things inside their "("<delayed>")"
-    //  inside a promise it will only do one of the following things :
-    //  - Return a Value
-    //  - Return a Value that's passed onto a chained Promise
-    //  - Throw an Error
+    /*
+    Promises .then and .catch only delay processing things inside their "("<delayed>")"
+    inside a promise it will only do one of the following things :
+    - Return a Value
+    - Return a Value that's passed onto a chained Promise
+    - Throw an Error
+    */
     return regAble(unameValue)
     .then((result) => {
         console.log('regAble has resolved as ' + result);
@@ -59,43 +85,19 @@ dbserver.post('/register', function(req, res) {
         return regAbleResult;
     })
 
-    //  if regAbleResult = false the username is already taken
+    //  if regAbleResult = fail the username is already taken
     .then((regAbleResult)=> {
-        if (regAbleResult === true) {
+        if (regAbleResult === 'success') {
             //  regRun should return "true" unless db connection fails
-            return regRun(myReq).then((result)=> res.send(result));
+            return regRun(myReq).then((result)=> res.json(result));
         } else {
-            return res.send(false);
+            return res.json('fail');
         }
     })
     .catch((error) => {
         return console.log(error);
     });
-
-    // if (regAbleTest === false) {
-    //     return res.json({status: 'That Username Is Taken'});
-    // }
-
-    // else {
-    //     regRun(myReq);
-    //     return res.send({status: (myReq.username, ' Successfully Registered')});
-    // }
 });
-
-/*
-dbserver.post('/register', function(req, res) {
-    let myReq = JSON.parse(req.body);
-    let unameValue = myReq.username.toLowerCase();
-    regAble(unameValue)
-      .then(function(result){
-          console.log(result); //<-- should be either true or false
-          return res.send(200, result);
-      })
-      .catch(function(err){
-        return res.send(500, 'my bad, something terrible happened');
-      })
-});
-*/
 
 const server = dbserver.listen(3000, function() {
     const host = server.address().address;

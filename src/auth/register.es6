@@ -6,6 +6,7 @@ import pgprom from 'pg-promise';
 let pgp = pgprom(options);
 
 import monitor from 'pg-monitor';
+console.log(process.env.TESTVALUE);
 
 //	database connection details
 const cn = {
@@ -33,13 +34,13 @@ export function regAble(uname) {
         } else {
             console.log('Username is Unavailable');
             monitor.detach(options);
-            return (false);
+            return 'fail';
         }
     })
     .catch(function(error) {
         console.log('there was an error in the query logic');
         monitor.detach(options);
-        return (false);
+        return 'fail';
     });
 }
 
@@ -58,11 +59,11 @@ export function regRun(regDetailsObj) {
     .then(function() {
         console.log(uname, 'successfully registered');
         monitor.detach(options);
-        return (true);
+        return 'success';
     })
     .catch(function(error) {
         console.log('there was an error in the query logic');
         monitor.detach(options);
-        return (false);
+        return 'fail';
     });
 }
