@@ -6,15 +6,14 @@ import pgprom from 'pg-promise';
 let pgp = pgprom(options);
 
 import monitor from 'pg-monitor';
-console.log(process.env.TESTVALUE);
 
 //	database connection details
 const cn = {
-    host: 'localhost', // server name or IP address;
-    port: 5432,
+    host: process.env.TAGGED_CONNECTION_HOST,
+    port: process.env.TAGGED_CONNECTION_PORT,
     database: 'tagged',
-    user: 'postgres',
-    password: 'password',
+    user: process.env.TAGGED_CONNECTION_USER,
+    password: process.env.TAGGED_CONNECTION_PASS,
 };
 
 //	set "db" as the database object
@@ -30,7 +29,7 @@ export function regAble(uname) {
         console.log('data =', data);
         if (data.length === 0) {
             console.log('Username is Available');
-            return (true);
+            return 'success';
         } else {
             console.log('Username is Unavailable');
             monitor.detach(options);

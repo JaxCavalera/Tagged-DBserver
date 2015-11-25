@@ -1,9 +1,9 @@
 import express from 'express';
-import methodOverride from 'method-override';
 
-/*
+// import methodOverride from 'method-override';
+
 import cors from 'cors';
-
+/*
 cors Cross-Origin Resource Sharing allows added security
 It uses Headers to lock in communication between a website and server
 the Origin is the port+url  this is all related to SSL
@@ -20,11 +20,11 @@ let pgp = pgprom(options);
 
 //	database connection details
 const cn = {
-    host: 'localhost', // server name or IP address;
-    port: 5432,
+    host: process.env.TAGGED_CONNECTION_HOST,
+    port: process.env.TAGGED_CONNECTION_PORT,
     database: 'tagged',
-    user: 'postgres',
-    password: 'password',
+    user: process.env.TAGGED_CONNECTION_USER,
+    password: process.env.TAGGED_CONNECTION_PASS,
 };
 
 //	set "db" as the database object
@@ -48,15 +48,20 @@ const sessionOptions = {
 //  Import DB Query Functions
 import {regAble, regRun} from './auth/register.es6';// regable(username) returns bool
 
-// const corsOptions = {
-//     origin: 'http://cxstudios.duckdns.org',
-// };
+//  Cross-Origin Resource Sharing  Options
+const whiteList = process.env.ORIGIN_WHITELIST;
+const corsOptions = {
+    origin: function(origin, callback) {
+        var originIsWhitelisted = whiteList.indexOf(origin) !== -1;
+        callback(null, originIsWhitelisted);
+    },
+};
 
 //  Configure the modules that the server code will use
 dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencoded procesing
 dbserver.use(bodyParser.text());
 dbserver.use(bodyParser.json());//  JSON processing
-dbserver.use(methodOverride());
+// dbserver.use(methodOverride());
 dbserver.use(session(sessionOptions));
 
 //  =====   Request Routing   =====
@@ -67,8 +72,9 @@ e.g. client URL = www.meal.com
 server URL is
 */
 
-dbserver.post('/register', function(req, res) {
-    let myReq = JSON.parse(req.body);
+dbserver.options('/register', cors());// enable pre-flight request for register route
+dbserver.post('/register', cors(corsOptions), function(req, res) {
+    let myReq = req.body;
 
     let unameValue = myReq.username;
     /*
