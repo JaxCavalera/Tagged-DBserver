@@ -1,34 +1,10 @@
 import express from 'express';
-
-// import methodOverride from 'method-override';
-
 import cors from 'cors';
 /*
 cors Cross-Origin Resource Sharing allows added security
 It uses Headers to lock in communication between a website and server
 the Origin is the port+url  this is all related to SSL
 */
-
-//  ===== Database Related Imports =====
-import promise from 'bluebird';
-let options = {promiseLib: promise};
-
-import monitor from 'pg-monitor';
-
-import pgprom from 'pg-promise';
-let pgp = pgprom(options);
-
-//	database connection details
-const cn = {
-    host: process.env.TAGGED_CONNECTION_HOST,
-    port: process.env.TAGGED_CONNECTION_PORT,
-    database: 'tagged',
-    user: process.env.TAGGED_CONNECTION_USER,
-    password: process.env.TAGGED_CONNECTION_PASS,
-};
-
-//	set "db" as the database object
-const db = pgp(cn);
 
 // IMPORT enhancing modules such as session and content handling;
 import bodyParser from 'body-parser';
@@ -40,13 +16,14 @@ import session from 'express-session';
 
 const dbserver = express();
 const sessionOptions = {
-    secret: 'secret',
+    secret: process.env.TAGGED_SECRET,
     resave: true,
     saveUninitialized: false,
 };
 
 //  Import DB Query Functions
-import {regAble, regRun} from './auth/register.es6';// regable(username) returns bool
+import {regAble, regRun} from './auth/register.es6';// regAble(username) returns 'success'/'fail'
+import {logRun} from './auth/login.es6';// logRun(username, password) returns 'success'/'fail'
 
 //  Cross-Origin Resource Sharing  Options
 const whiteList = process.env.ORIGIN_WHITELIST;
@@ -61,18 +38,21 @@ const corsOptions = {
 dbserver.use(bodyParser.urlencoded({extended: true}));//    x-www-form-urlencoded procesing
 dbserver.use(bodyParser.text());
 dbserver.use(bodyParser.json());//  JSON processing
-// dbserver.use(methodOverride());
 dbserver.use(session(sessionOptions));
 
 //  =====   Request Routing   =====
 /*
-Routes are the '/route-goes-here', part and are mirrored
-as an extra in the client code.
-e.g. client URL = www.meal.com
-server URL is
+Routes are the ('/route-goes-here') part
+They should be identical to the server-side route listed
+In the Client-Side code.
 */
 
-dbserver.options('/register', cors());// enable pre-flight request for register route
+//  =====  REGISTER ROUTE  =====
+//  Enable pre-flight request for register route
+//  Pre-flight allows requests with a custom header / body Init
+dbserver.options('/register', cors());
+
+//  =====  listen for post requests to the '/register' route  =====
 dbserver.post('/register', cors(corsOptions), function(req, res) {
     let myReq = req.body;
 
@@ -104,6 +84,29 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
         return console.log(error);
     });
 });
+
+//  ==================================================
+
+//  =====  LOGIN ROUTE  =====
+dbserver.options('/login', cors());
+
+dbserver.post('/login', cors(corsOptions), function(req, res) {
+    let myReq = req.body;
+
+    return logRun(myReq)
+    .then((result)=> {
+        if (result === 'success') {
+            res.json(result);
+        } else {
+            return res.json('fail');
+        }
+    })
+    .catch((error) => {
+        return console.log(error);
+    });
+});
+
+//  ==================================================
 
 const server = dbserver.listen(3000, function() {
     const host = server.address().address;
