@@ -14,11 +14,24 @@ const upload = multer();//   Multipart/form-data processing
 //  Session must be imported AFTER bodyparser etc
 import session from 'express-session';
 
+//  Replaces var PostgreSqlStore = require('connect-pg-simple')(session);
+import pgStore from 'connect-pg-simple';
+const PostgreSqlStore = pgStore(session);
+
 const dbserver = express();
 const sessionOptions = {
     secret: process.env.TAGGED_SECRET,
     resave: true,
     saveUninitialized: false,
+    store: new PostgreSqlStore({
+        conString: 'postgres://'
+        + process.env.TAGGED_CONNECTION_USER + ':'
+        + process.env.TAGGED_CONNECTION_PASS + '@'
+        + process.env.TAGGED_CONNECTION_HOST + ':'
+        + process.env.TAGGED_CONNECTION_PORT + '/'
+        + 'tagged',
+        tableName: 'session_store',
+    }),
 };
 
 //  Import DB Query Functions
