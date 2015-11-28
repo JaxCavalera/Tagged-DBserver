@@ -20,9 +20,6 @@ const PostgreSqlStore = pgStore(session);
 
 const dbserver = express();
 const sessionOptions = {
-    secret: process.env.TAGGED_SECRET,
-    resave: false,
-    saveUninitialized: false,
     store: new PostgreSqlStore({
         conString: 'postgres://'
         + process.env.TAGGED_CONNECTION_USER + ':'
@@ -32,8 +29,10 @@ const sessionOptions = {
         + 'tagged',
         tableName: 'session_store',
     }),
-
-    // cookie: {maxAge: 300000},
+    secret: process.env.TAGGED_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {maxAge: 300000},
 };
 
 //  Import DB Query Functions
@@ -122,6 +121,7 @@ dbserver.post('/login', cors(corsOptions), function(req, res) {
 
             // we need to add a 'user' prop to the session object in here
             req.session.user = myReq.username;
+            console.log(req.session);
             return res.json(result);
         } else {
             console.log('Login Attempt: ' + result + 'No Match Found');
@@ -139,6 +139,7 @@ dbserver.post('/login', cors(corsOptions), function(req, res) {
 dbserver.options('/sessionStatus', cors());
 
 dbserver.post('/sessionStatus', cors(corsOptions), function(req, res) {
+    console.log(req.session);
     if (!req.session.user) {
         console.log('no active session found');
         return res.json('');
