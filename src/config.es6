@@ -21,7 +21,7 @@ const PostgreSqlStore = pgStore(session);
 const dbserver = express();
 const sessionOptions = {
     secret: process.env.TAGGED_SECRET,
-    resave: true,
+    resave: false,
     saveUninitialized: false,
     store: new PostgreSqlStore({
         conString: 'postgres://'
@@ -32,11 +32,14 @@ const sessionOptions = {
         + 'tagged',
         tableName: 'session_store',
     }),
+
+    // cookie: {maxAge: 300000},
 };
 
 //  Import DB Query Functions
 import {regAble, regRun} from './auth/register.es6';// regAble(username) returns 'success'/'fail'
 import {logRun} from './auth/login.es6';// logRun(username, password) returns 'success'/'fail'
+import {sessStatus} from './auth/session.es6';
 
 //  Cross-Origin Resource Sharing  Options
 const whiteList = process.env.ORIGIN_WHITELIST;
@@ -88,7 +91,13 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
     .then((regAbleResult)=> {
         if (regAbleResult === 'success') {
             //  regRun should return "true" unless db connection fails
-            return regRun(myReq).then((result)=> res.json(result));
+            return regRun(myReq)
+            .then((result)=> {
+                // regrun adds the user to the db
+                // we need to add a 'user' prop to the session object in here
+                req.session.user = myReq.username;
+                return res.json(result);
+            });
         } else {
             return res.json('fail');
         }
@@ -109,14 +118,34 @@ dbserver.post('/login', cors(corsOptions), function(req, res) {
     return logRun(myReq)
     .then((result)=> {
         if (result === 'success') {
-            res.json(result);
+            console.log('Login Attempt: ' + result);
+
+            // we need to add a 'user' prop to the session object in here
+            req.session.user = myReq.username;
+            return res.json(result);
         } else {
+            console.log('Login Attempt: ' + result + 'No Match Found');
             return res.json('fail');
         }
     })
     .catch((error) => {
         return console.log(error);
     });
+});
+
+//  ==================================================
+
+//  =====  SESSION STATUS ROUTE  =====
+dbserver.options('/sessionStatus', cors());
+
+dbserver.post('/sessionStatus', cors(corsOptions), function(req, res) {
+    if (!req.session.user) {
+        console.log('no active session found');
+        return res.json('');
+    } else {
+        console.log('active session found');
+        return res.json('active');
+    }
 });
 
 //  ==================================================
