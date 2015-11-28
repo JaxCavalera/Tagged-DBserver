@@ -47,6 +47,8 @@ const corsOptions = {
         var originIsWhitelisted = whiteList.indexOf(origin) !== -1;
         callback(null, originIsWhitelisted);
     },
+
+    credentials: true,
 };
 
 //  Configure the modules that the server code will use
@@ -65,7 +67,7 @@ In the Client-Side code.
 //  =====  REGISTER ROUTE  =====
 //  Enable pre-flight request for register route
 //  Pre-flight allows requests with a custom header / body Init
-dbserver.options('/register', cors());
+dbserver.options('/register', cors(corsOptions));
 
 //  =====  listen for post requests to the '/register' route  =====
 dbserver.post('/register', cors(corsOptions), function(req, res) {
@@ -93,8 +95,7 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
             return regRun(myReq)
             .then((result)=> {
                 // regrun adds the user to the db
-                // we need to add a 'user' prop to the session object in here
-                req.session.user = myReq.username;
+
                 return res.json(result);
             });
         } else {
@@ -109,7 +110,7 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
 //  ==================================================
 
 //  =====  LOGIN ROUTE  =====
-dbserver.options('/login', cors());
+dbserver.options('/login', cors(corsOptions));
 
 dbserver.post('/login', cors(corsOptions), function(req, res) {
     let myReq = req.body;
@@ -136,10 +137,9 @@ dbserver.post('/login', cors(corsOptions), function(req, res) {
 //  ==================================================
 
 //  =====  SESSION STATUS ROUTE  =====
-dbserver.options('/sessionStatus', cors());
+dbserver.options('/sessionStatus', cors(corsOptions));
 
 dbserver.post('/sessionStatus', cors(corsOptions), function(req, res) {
-    console.log(req.session);
     if (!req.session.user) {
         console.log('no active session found');
         return res.json('');
