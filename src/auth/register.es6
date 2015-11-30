@@ -26,12 +26,9 @@ export function regAble(uname) {
         name: uname,
     })
     .then((data) => {
-        console.log('data =', data);
         if (data.length === 0) {
-            console.log('Username is Available');
             return 'success';
         } else {
-            console.log('Username is Unavailable');
             monitor.detach(options);
             return 'fail';
         }

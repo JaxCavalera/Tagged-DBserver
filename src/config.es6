@@ -32,7 +32,7 @@ const sessionOptions = {
     secret: process.env.TAGGED_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: {maxAge: 300000},
+    cookie: {maxAge: 60000},//24 hours = 86400000
 };
 
 //  Import DB Query Functions
@@ -72,7 +72,6 @@ dbserver.options('/register', cors(corsOptions));
 //  =====  listen for post requests to the '/register' route  =====
 dbserver.post('/register', cors(corsOptions), function(req, res) {
     let myReq = req.body;
-
     let unameValue = myReq.username;
     /*
     Promises .then and .catch only delay processing things inside their "("<delayed>")"
@@ -83,7 +82,7 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
     */
     return regAble(unameValue)
     .then((result) => {
-        console.log('regAble has resolved as ' + result);
+        console.log('Register Check : ', result);
         let regAbleResult = result;
         return regAbleResult;
     })
@@ -95,11 +94,12 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
             return regRun(myReq)
             .then((result)=> {
                 // regrun adds the user to the db
-
-                return res.json(result);
+                // we need to add a 'user' prop to the session object in here
+                req.session.user = myReq.username;
+                return res.json({regResult: 'success', sessionStatus: 'active', currentUser: req.session.user});
             });
         } else {
-            return res.json('fail');
+            return res.json({regResult: 'fail', sessionStatus: 'none', currentUser: ''});
         }
     })
     .catch((error) => {
@@ -114,19 +114,16 @@ dbserver.options('/login', cors(corsOptions));
 
 dbserver.post('/login', cors(corsOptions), function(req, res) {
     let myReq = req.body;
-
     return logRun(myReq)
     .then((result)=> {
+        console.log('Login Attempt: ' + result);
         if (result === 'success') {
-            console.log('Login Attempt: ' + result);
 
             // we need to add a 'user' prop to the session object in here
             req.session.user = myReq.username;
-            console.log(req.session);
-            return res.json(result);
+            return res.json({logResult: 'success', sessionStatus: 'active', currentUser: req.session.user});
         } else {
-            console.log('Login Attempt: ' + result + 'No Match Found');
-            return res.json('fail');
+            return res.json({logResult: 'fail', sessionStatus: 'none', currentUser: ''});
         }
     })
     .catch((error) => {
@@ -142,10 +139,10 @@ dbserver.options('/sessionStatus', cors(corsOptions));
 dbserver.post('/sessionStatus', cors(corsOptions), function(req, res) {
     if (!req.session.user) {
         console.log('no active session found');
-        return res.json('');
+        return res.json({sessionStatus: 'none', currentUser: ''});
     } else {
         console.log('active session found');
-        return res.json('active');
+        return res.json({sessionStatus: 'active', currentUser: req.session.user});
     }
 });
 
