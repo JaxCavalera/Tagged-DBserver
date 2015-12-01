@@ -148,6 +148,22 @@ dbserver.post('/sessionStatus', cors(corsOptions), function(req, res) {
 
 //  ==================================================
 
+//  =====  LOGOUT ROUTE  =====
+dbserver.options('/logout', cors(corsOptions));
+
+dbserver.post('/logout', cors(corsOptions), function(req, res) {
+    if (!req.session.user) {
+        console.log('no active session found');
+        return res.json({sessionStatus: 'none', currentUser: ''});
+    } else {
+        console.log('logging ' + req.session.user + ' out of their session');
+        req.session.destroy();
+        return res.json({sessionStatus: 'none', currentUser: ''});
+    }
+});
+
+//  ==================================================
+
 const server = dbserver.listen(3000, function() {
     const host = server.address().address;
     const port = server.address().port;
