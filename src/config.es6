@@ -32,7 +32,7 @@ const sessionOptions = {
     secret: process.env.TAGGED_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: {maxAge: 60000},//24 hours = 86400000
+    cookie: {maxAge: 86400000},//24 hours = 86400000
 };
 
 //  Import DB Query Functions
