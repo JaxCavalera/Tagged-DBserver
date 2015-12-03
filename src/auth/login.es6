@@ -27,7 +27,7 @@ export function logRun(logDetailsObj) {
     const uname = logDetailsObj.username;
     const pword = logDetailsObj.password;
 
-    return db.query('SELECT username FROM users WHERE username = ${name} AND password = crypt(${pass}, password)', {
+    return db.query('SELECT uuid, username FROM users WHERE username = ${name} AND password = crypt(${pass}, password)', {
         name:   uname,
         pass:   pword,
         md5:    'md5',
@@ -35,7 +35,7 @@ export function logRun(logDetailsObj) {
     .then(function(result) {
         if (result.length > 0) {
             monitor.detach(options);
-            return 'success';
+            return result;
         } else {
             monitor.detach(options);
             return 'fail';

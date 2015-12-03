@@ -90,13 +90,20 @@ dbserver.post('/register', cors(corsOptions), function(req, res) {
     //  if regAbleResult = fail the username is already taken
     .then((regAbleResult)=> {
         if (regAbleResult === 'success') {
+
             //  regRun should return "true" unless db connection fails
+            // regrun adds the user to the db
             return regRun(myReq)
             .then((result)=> {
-                // regrun adds the user to the db
-                // we need to add a 'user' prop to the session object in here
-                req.session.user = myReq.username;
-                return res.json({regResult: 'success', sessionStatus: 'active', currentUser: req.session.user});
+                if (result === 'success') {
+                    // we need to add the 'user' & 'uuid' props to the session object in here
+                    logRun(myReq)
+                    .then((result)=> {
+                        req.session.user = result[0].username;
+                        req.session.uuid = result[0].uuid;
+                        return res.json({regResult: 'success', sessionStatus: 'active', currentUser: req.session.user});
+                    });
+                }
             });
         } else {
             return res.json({regResult: 'fail', sessionStatus: 'none', currentUser: ''});
@@ -116,11 +123,12 @@ dbserver.post('/login', cors(corsOptions), function(req, res) {
     let myReq = req.body;
     return logRun(myReq)
     .then((result)=> {
-        console.log('Login Attempt: ' + result);
-        if (result === 'success') {
+        if (result[0].username === myReq.username) {
+            console.log('Login Attempt for ' + result[0].username + ' : Sucess');
 
-            // we need to add a 'user' prop to the session object in here
-            req.session.user = myReq.username;
+            // we need to add a 'user' and 'uuid' prop to the session object in here
+            req.session.user = result[0].username;
+            req.session.uuid = result[0].uuid;
             return res.json({logResult: 'success', sessionStatus: 'active', currentUser: req.session.user});
         } else {
             return res.json({logResult: 'fail', sessionStatus: 'none', currentUser: ''});
