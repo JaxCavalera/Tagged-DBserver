@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+
 /*
 cors Cross-Origin Resource Sharing allows added security
 It uses Headers to lock in communication between a website and server
@@ -9,7 +10,16 @@ the Origin is the port+url  this is all related to SSL
 // IMPORT enhancing modules such as session and content handling;
 import bodyParser from 'body-parser';
 import multer from 'multer';
-const upload = multer();//   Multipart/form-data processing
+
+//   Multipart/form-data processing configuration
+const storage = multer.diskStorage({
+    destination: './galleries',
+    filename: function(req, file, cb) {
+        cb(null, Date.now() + '_' + file.originalname);
+    },
+});
+
+const upload = multer({storage: storage});
 
 //  Session must be imported AFTER bodyparser etc
 import session from 'express-session';
@@ -38,7 +48,8 @@ const sessionOptions = {
 //  Import DB Query Functions
 import {regAble, regRun} from './auth/register.es6';// regAble(username) returns 'success'/'fail'
 import {logRun} from './auth/login.es6';// logRun(username, password) returns 'success'/'fail'
-import {sessStatus} from './auth/session.es6';
+import {galleryUp} from './auth/gallery.es6';// galleryUp(file, name, uuid) same as ^
+import {sessStatus} from './auth/session.es6';// TEMPLATE ONLY
 
 //  Cross-Origin Resource Sharing  Options
 const whiteList = process.env.ORIGIN_WHITELIST;
@@ -170,6 +181,33 @@ dbserver.post('/logout', cors(corsOptions), function(req, res) {
     }
 });
 
+//  ==================================================
+//          =====  START  OF  GALLERY  =====
+//  ==================================================
+
+//  =====  GALLERY UPLOAD ROUTE  =====
+dbserver.post('/galleryUpload', cors(corsOptions), upload.single('file'), function(req, res) {
+    if (!req.session.user) {
+        console.log('Session Expired');
+        return res.send('Session Expired');
+    } else {
+        console.log('Upload Details : ', req.file, req.body);
+
+        //  Run database function to save the request data
+        //  Use the req.session.uuid for inserting
+        galleryUp(req.file.path, req.body.imageName, req.session.uuid)
+        .then((result) => {
+            console.log(result);
+            return res.send(result);
+        })
+        .catch((error) => {
+            console.log('There was a problem ', error);
+        });
+    }
+});
+
+//  ==================================================
+//           =====  START  OF  SERVER  =====
 //  ==================================================
 
 const server = dbserver.listen(3000, function() {
