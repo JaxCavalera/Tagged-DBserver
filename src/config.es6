@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 
 /*
 cors Cross-Origin Resource Sharing allows added security
@@ -13,7 +14,7 @@ import multer from 'multer';
 
 //   Multipart/form-data processing configuration
 const storage = multer.diskStorage({
-    destination: './galleries',
+    destination: './src/galleries',
     filename: function(req, file, cb) {
         cb(null, Date.now() + '_' + file.originalname);
     },
@@ -48,7 +49,7 @@ const sessionOptions = {
 //  Import DB Query Functions
 import {regAble, regRun} from './auth/register.es6';// regAble(username) returns 'success'/'fail'
 import {logRun} from './auth/login.es6';// logRun(username, password) returns 'success'/'fail'
-import {galleryUp} from './auth/gallery.es6';// galleryUp(file, name, uuid) same as ^
+import {galleryUp, galleryDown, imgDbLookup} from './auth/gallery.es6';// galleryUp(file, name, uuid) same as ^
 import {sessStatus} from './auth/session.es6';// TEMPLATE ONLY
 
 //  Cross-Origin Resource Sharing  Options
@@ -135,7 +136,7 @@ dbserver.post('/login', cors(corsOptions), function(req, res) {
     return logRun(myReq)
     .then((result)=> {
         if (result[0].username === myReq.username) {
-            console.log('Login Attempt for ' + result[0].username + ' : Sucess');
+            console.log('Login Attempt for ' + result[0].username + ' : Success');
 
             // we need to add a 'user' and 'uuid' prop to the session object in here
             req.session.user = result[0].username;
@@ -195,7 +196,7 @@ dbserver.post('/galleryUpload', cors(corsOptions), upload.single('file'), functi
 
         //  Run database function to save the request data
         //  Use the req.session.uuid for inserting
-        galleryUp(req.file.path, req.body.imageName, req.session.uuid)
+        galleryUp(req.file.path.substring(4), req.body.imageName, req.session.uuid)
         .then((result) => {
             console.log(result);
             return res.send(result);
@@ -204,6 +205,44 @@ dbserver.post('/galleryUpload', cors(corsOptions), upload.single('file'), functi
             console.log('There was a problem ', error);
         });
     }
+});
+
+//  ==================================================
+
+//  =====  IMAGE ROUTE FOR CLIENT REQUESTS  =====
+dbserver.post('/galleryDownload', cors(corsOptions), upload.single('file'), function(req, res) {
+    if (!req.session.user) {
+        console.log('Session Expired');
+        return res.send('Session Expired');
+    } else {
+
+        console.log('download path found');
+
+        //  Run database function to get a list of image sources matching
+        //  The current req.session.uuid
+        galleryDown(req.session.uuid)
+        .then((result) => {
+            console.log(result);
+            return res.json(result);
+        })
+        .catch((error) => {
+            console.log('There was a problem ', error);
+        });
+    }
+});
+
+//  ==================================================
+
+//  =====  IMAGE ROUTE FOR CLIENT REQUESTS  =====
+dbserver.get('/galleries/*', function(req, res) {
+    imgDbLookup(req.originalUrl.substring(1).replace('/', '\\'))
+    .then((result) => {
+        if (req.session.uuid === result[0].uuid) {
+            res.sendFile(req.originalUrl, {root: './src/'});
+        } else {
+            res.send('access denied');
+        }
+    });
 });
 
 //  ==================================================
